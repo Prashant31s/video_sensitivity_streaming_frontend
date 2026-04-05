@@ -14,6 +14,7 @@ const emptyFilters = {
   processingStatus: "",
   sensitivityStatus: "",
   category: ""
+  
 };
 
 function buildQueryString(filters) {
