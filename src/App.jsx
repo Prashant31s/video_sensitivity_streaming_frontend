@@ -105,8 +105,10 @@ export default function App() {
     try {
       const response = await api.uploadVideo(token, formData);
       setVideos((current) => [response.video, ...current]);
+      return response.video;
     } catch (err) {
       setError(err.message);
+      throw err;
     } finally {
       setBusy(false);
     }

@@ -127,6 +127,12 @@ label {
   color: #41506d;
 }
 
+.field-note {
+  margin: -2px 0 0;
+  font-size: 0.85rem;
+  color: #5b6a85;
+}
+
 input,
 select,
 textarea {

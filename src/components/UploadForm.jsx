@@ -1,14 +1,48 @@
 import { useState } from "react";
 
+const MAX_VIDEO_SIZE_MB = 10;
+const MAX_VIDEO_SIZE_BYTES = MAX_VIDEO_SIZE_MB * 1024 * 1024;
+
 export function UploadForm({ onUpload, disabled }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("General");
   const [file, setFile] = useState(null);
+  const [validationError, setValidationError] = useState("");
 
-  function handleSubmit(event) {
+  function validateFile(nextFile) {
+    if (!nextFile) {
+      return "Video file is required.";
+    }
+
+    if (nextFile.size > MAX_VIDEO_SIZE_BYTES) {
+      return `Video file must be ${MAX_VIDEO_SIZE_MB} MB or smaller.`;
+    }
+
+    return "";
+  }
+
+  function handleFileChange(event) {
+    const nextFile = event.target.files?.[0] ?? null;
+    const nextError = validateFile(nextFile);
+
+    setValidationError(nextError);
+
+    if (nextError) {
+      setFile(null);
+      event.target.value = "";
+      return;
+    }
+
+    setFile(nextFile);
+  }
+
+  async function handleSubmit(event) {
     event.preventDefault();
-    if (!file) {
+    const nextError = validateFile(file);
+
+    if (nextError) {
+      setValidationError(nextError);
       return;
     }
 
@@ -18,13 +52,18 @@ export function UploadForm({ onUpload, disabled }) {
     formData.append("category", category);
     formData.append("video", file);
 
-    onUpload(formData);
+    try {
+      await onUpload(formData);
 
-    setTitle("");
-    setDescription("");
-    setCategory("General");
-    setFile(null);
-    event.target.reset();
+      setTitle("");
+      setDescription("");
+      setCategory("General");
+      setFile(null);
+      setValidationError("");
+      event.target.reset();
+    } catch (_error) {
+      // Preserve the form values so the user can retry after fixing the issue.
+    }
   }
 
   return (
@@ -51,8 +90,10 @@ export function UploadForm({ onUpload, disabled }) {
 
       <label>
         <span>Video File</span>
-        <input type="file" accept="video/*" onChange={(event) => setFile(event.target.files?.[0] ?? null)} required />
+        <input type="file" accept="video/*" onChange={handleFileChange} required />
       </label>
+      <p className="field-note">Maximum file size: {MAX_VIDEO_SIZE_MB} MB.</p>
+      {validationError && <p className="error-text">{validationError}</p>}
 
       <button className="primary-button" disabled={disabled} type="submit">
         {disabled ? "Uploading..." : "Upload video"}
